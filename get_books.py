@@ -73,6 +73,7 @@ class OpenStaxMirror:
         self.discovered_repos = []
         self.state_file = os.path.join(self.mirror_dir, '.getbooks_state.json')
         self.last_state = self._load_state()
+        self._whitelist = self._load_whitelist()  # repo paths from openstax_books.md
 
     def _setup_logging(self, log_level):
         os.makedirs("logs", exist_ok=True)
@@ -106,6 +107,26 @@ class OpenStaxMirror:
             except Exception as e:
                 self.logger.warning(f"Could not load {self.config_file}: {e} — using defaults")
         return config
+
+    def _load_whitelist(self) -> set:
+        """Load the set of allowed repo paths (org/repo) from openstax_books.md."""
+        md_file = self.config.get("books_reference_file", "openstax_books.md")
+        if not os.path.exists(md_file):
+            self.logger.warning(f"Whitelist file {md_file} not found — all repos will be accepted")
+            return set()
+        try:
+            with open(md_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+            paths = set()
+            for path in re.findall(r'https://github\.com/([^)\]\s]+)', content):
+                path = path.rstrip('/')
+                if '.' not in path.split('/')[-1]:  # skip file links
+                    paths.add(path.lower())
+            self.logger.info(f"Whitelist loaded: {len(paths)} repos from {md_file}")
+            return paths
+        except Exception as e:
+            self.logger.warning(f"Could not load whitelist: {e}")
+            return set()
 
     def _load_state(self):
         try:
@@ -180,12 +201,17 @@ class OpenStaxMirror:
         try:
             repos = self.gh.search_repositories(query)
             for repo in repos:
-                if not any(r['name'] == repo.full_name for r in self.discovered_repos):
+                full_name = repo.full_name
+                # Enforce whitelist: only clone repos listed in openstax_books.md
+                if self._whitelist and full_name.lower() not in self._whitelist:
+                    self.logger.debug(f"  Skipping (not in whitelist): {full_name}")
+                    continue
+                if not any(r['name'] == full_name for r in self.discovered_repos):
                     self.discovered_repos.append({
-                        'name': repo.full_name,
+                        'name': full_name,
                         'url': repo.clone_url
                     })
-                    self.logger.debug(f"  Found: {repo.full_name}")
+                    self.logger.debug(f"  Found: {full_name}")
         except Exception as e:
             if hasattr(e, 'status') and e.status == 403:
                 self.logger.warning(f"Rate limit hit for query '{query}'")

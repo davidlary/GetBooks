@@ -15,9 +15,7 @@ import pytest
 MIRROR_DIR = Path(__file__).parent.parent / "openstax_mirror"
 
 EXPECTED_REPOS = [
-    "cnx-user-books_cnxbook-university-physics-volume-1",
-    "cnx-user-books_cnxbook-university-physics-volume-2",
-    "cnx-user-books_cnxbook-university-physics-volume-3",
+    "openstax_osbooks-university-physics-bundle",  # supersedes the 3 legacy cnx-user-books volumes
     "openstax_osbooks-biology-bundle",
     "openstax_osbooks-calculus-bundle",
     "openstax_osbooks-chemistry-bundle",
@@ -93,9 +91,11 @@ def test_chemistry_bundle_has_two_collections(mirror_repos):
         f"Expected 2 chemistry collection files, found {len(col_files)}: {col_files}"
 
 
-def test_university_physics_three_repos(mirror_repos):
-    """University Physics must have 3 separate repos (vol 1, 2, 3)."""
-    up_repos = [r for r in mirror_repos
-                if 'university-physics-volume' in r.name]
-    assert len(up_repos) == 3, \
-        f"Expected 3 University Physics volume repos, found {len(up_repos)}"
+def test_university_physics_bundle_present(mirror_repos):
+    """University Physics bundle repo must be present with 3 collection.xml files."""
+    up_bundle = next((r for r in mirror_repos
+                      if r.name == 'openstax_osbooks-university-physics-bundle'), None)
+    assert up_bundle is not None, "University Physics bundle repo missing"
+    col_files = list((up_bundle / 'collections').glob('*.collection.xml'))
+    assert len(col_files) == 3, \
+        f"Expected 3 University Physics collection files, found {len(col_files)}"
