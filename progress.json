@@ -1,5 +1,5 @@
 {
-  "last_completed_chunk": "Chunk 7",
+  "last_completed_chunk": "Chunk C",
   "completed_chunks": [
     "Chunk 1",
     "Chunk 2",
@@ -7,10 +7,13 @@
     "Chunk 4",
     "Chunk 5",
     "Chunk 6",
-    "Chunk 7"
+    "Chunk 7",
+    "Chunk A",
+    "Chunk B",
+    "Chunk C"
   ],
-  "timestamp": "2026-03-09T13:00:00Z",
-  "next_chunk": "Chunk A",
+  "timestamp": "2026-03-09T15:00:00Z",
+  "next_chunk": null,
   "notes": {
     "Chunk 1": "GetBooks/ initialized, .gitignore, README.md; rsync openstax_mirror in progress",
     "Chunk 2": "get_books.py written (stripped port from Books/GetBooks.py)",
@@ -18,6 +21,9 @@
     "Chunk 4": "cnxml_parser.py content extraction (all 10 block types)",
     "Chunk 5": "series_resolver.py: detect_series(), volume ordering",
     "Chunk 6": "book_reader.py: BookReader, Book, Section public API",
-    "Chunk 7": "json_exporter.py, requirements.txt, tests/, openstax_books.md, openstax_config.json"
+    "Chunk 7": "json_exporter.py, requirements.txt, tests/, openstax_books.md, openstax_config.json",
+    "Chunk A": "openstax_adapter.py for SlideCreationSystem; 21 tests pass",
+    "Chunk B": "pipeline.py and cli.py modifications for --openstax-json and --openstax-book flags",
+    "Chunk C": "End-to-end validation: Biology 2e Ch1 (41 prompts), University Physics Vol1 Ch1 (83 prompts), Chemistry 2e Ch1 (78 prompts). Bugs fixed: hierarchical TOC chapter numbering global counter, learning objectives from <md:abstract>, section titles from module CNXML. 72 GetBooks tests + 21 SlideCreationSystem adapter tests pass."
   }
 }

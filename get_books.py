@@ -61,7 +61,12 @@ class OpenStaxMirror:
         self.config = self._load_config()
 
         if github_token and PYGITHUB_AVAILABLE:
-            self.gh = Github(github_token)
+            try:
+                from github import Auth as GithubAuth
+                self.gh = Github(auth=GithubAuth.Token(github_token))
+            except (ImportError, TypeError):
+                # Older PyGithub versions use positional token arg
+                self.gh = Github(github_token)
         else:
             self.gh = None
 
@@ -304,6 +309,57 @@ class OpenStaxMirror:
                 status.append({'repo': repo_name, 'status': f'error: {e}'})
         return status
 
+    def pull_existing_mirror(self):
+        """
+        Pull latest commits for all repos already present in mirror_dir.
+        Does not require GitHub API — works purely via git pull on local clones.
+        Used when discovery is not needed (repos already cloned).
+        """
+        results = {'updated': [], 'skipped': [], 'failed': []}
+        if not os.path.exists(self.mirror_dir):
+            self.logger.error(f"Mirror directory not found: {self.mirror_dir}")
+            return results
+
+        repos = [
+            d for d in os.scandir(self.mirror_dir)
+            if d.is_dir() and os.path.exists(os.path.join(d.path, '.git'))
+        ]
+        total = len(repos)
+        self.logger.info(f"Pulling updates for {total} repos in {self.mirror_dir}...")
+
+        timeout = self.config.get("clone_timeout_seconds", 300)
+        for idx, entry in enumerate(sorted(repos, key=lambda e: e.name), 1):
+            local_path = entry.path
+            repo_name = entry.name
+            prefix = f"  [{idx}/{total}]"
+            before_hash = self._get_commit_hash(local_path)
+            try:
+                subprocess.run(
+                    ['git', 'pull', '--ff-only'],
+                    cwd=local_path, capture_output=True, text=True,
+                    check=True, timeout=timeout
+                )
+                after_hash = self._get_commit_hash(local_path)
+                if after_hash != before_hash:
+                    self.logger.info(f"{prefix} Updated: {repo_name}")
+                    results['updated'].append(repo_name)
+                else:
+                    self.logger.info(f"{prefix} Already current: {repo_name}")
+                    results['skipped'].append(repo_name)
+            except subprocess.CalledProcessError as e:
+                self.logger.warning(f"{prefix} Pull failed for {repo_name}: {e.stderr.strip()}")
+                results['failed'].append(repo_name)
+            except subprocess.TimeoutExpired:
+                self.logger.warning(f"{prefix} Pull timed out: {repo_name}")
+                results['failed'].append(repo_name)
+
+        self.logger.info(
+            f"Pull complete: {len(results['updated'])} updated, "
+            f"{len(results['skipped'])} already current, "
+            f"{len(results['failed'])} failed"
+        )
+        return results
+
     def get_stats(self):
         """Return statistics about the current mirror."""
         repos = []
@@ -341,6 +397,8 @@ def main():
     parser.add_argument('--token', default=os.environ.get('GITHUB_TOKEN'), help='GitHub token')
     parser.add_argument('--dry-run', action='store_true', help='Preview without changes')
     parser.add_argument('--check-updates', action='store_true', help='Non-destructive update check')
+    parser.add_argument('--pull-existing', action='store_true',
+                        help='Pull latest for all already-cloned repos (no API needed)')
     parser.add_argument('--stats', action='store_true', help='Show mirror statistics')
     parser.add_argument('--verbose', action='store_true', help='Debug logging')
     args = parser.parse_args()
@@ -361,6 +419,8 @@ def main():
         status = mirror.check_updates()
         for s in status:
             print(f"  {s['status']:10s}  {s['repo']}")
+    elif args.pull_existing:
+        mirror.pull_existing_mirror()
     else:
         mirror.update_mirror()
 

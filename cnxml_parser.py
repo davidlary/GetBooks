@@ -326,6 +326,7 @@ def _extract_chapter_only_toc(content: etree._Element, collection_id: str) -> Tu
 def _extract_hierarchical_toc(content: etree._Element, collection_id: str) -> Tuple[TOCNode, int]:
     toc_order = 0
     units = []
+    ch_num = 0  # Global chapter counter across all units
     for unit_elem in content.findall('./col:subcollection', NAMESPACES):
         unit_title_elem = unit_elem.find('./md:title', NAMESPACES)
         if unit_title_elem is None:
@@ -341,7 +342,6 @@ def _extract_hierarchical_toc(content: etree._Element, collection_id: str) -> Tu
         unit_content = unit_elem.find('./col:content', NAMESPACES)
         if unit_content is None:
             continue
-        ch_num = 0
         for ch_elem in unit_content.findall('./col:subcollection', NAMESPACES):
             ch_title_elem = ch_elem.find('./md:title', NAMESPACES)
             if ch_title_elem is None:
@@ -679,6 +679,14 @@ def _extract_learning_objectives(root: etree._Element) -> List[str]:
         cls = note.get('class', note.get('type', ''))
         if 'learning-objective' in cls.lower():
             for item in note.findall('.//cnxml:item', NAMESPACES):
+                text = _get_text(item).strip()
+                if text and text not in objectives:
+                    objectives.append(text)
+    # Pattern 3: <md:abstract> containing a list (modern OpenStax format)
+    if not objectives:
+        abstract = root.find('.//md:abstract', NAMESPACES)
+        if abstract is not None:
+            for item in abstract.findall('.//cnxml:item', NAMESPACES):
                 text = _get_text(item).strip()
                 if text and text not in objectives:
                     objectives.append(text)

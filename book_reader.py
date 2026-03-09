@@ -79,6 +79,11 @@ class Section:
             self.content = extract_section_content(module_path, repo_path)
             self.content.section_number = self.section_number
             self.content.toc_order = self.toc_order
+            # If the TOC node has a placeholder title, use the actual module title
+            if (self.content.title and self.content.title != 'Untitled' and
+                    (not self.toc_node.title or
+                     self.toc_node.title.startswith('Section '))):
+                self.toc_node.title = self.content.title
         except Exception as e:
             logger.error(f"Error loading {module_path}: {e}")
             return None
