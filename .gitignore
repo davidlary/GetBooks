@@ -1,0 +1,28 @@
+# Large data — never committed
+openstax_mirror/
+*.log
+logs/
+
+# Credentials
+.env
+*.env
+*_key.json
+secrets/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# OS
+.DS_Store
+
+# Test/cache artifacts
+.coverage
+htmlcov/

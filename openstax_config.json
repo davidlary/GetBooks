@@ -1,0 +1,20 @@
+{
+  "search_queries": {
+    "openstax_main": "org:openstax osbooks- in:name",
+    "cnx_books": "org:cnx-user-books cnxbook in:name",
+    "additional_orgs": []
+  },
+  "books_reference_file": "openstax_books.md",
+  "clone_timeout_seconds": 300,
+  "http_request_timeout_seconds": 10,
+  "subject_mapping": {
+    "Business": ["business", "accounting", "economics", "entrepreneurship", "management", "organizational"],
+    "Mathematics": ["algebra", "calculus", "precalculus", "trigonometry", "statistics", "prealgebra", "mathematics", "contemporary mathematics"],
+    "Biology": ["biology", "anatomy", "physiology", "microbiology", "concepts of biology"],
+    "Chemistry": ["chemistry", "organic chemistry"],
+    "Physics": ["physics", "university physics"],
+    "Social Sciences": ["government", "american government", "political science", "sociology", "anthropology", "psychology", "history"],
+    "Philosophy": ["philosophy"],
+    "Astronomy": ["astronomy"]
+  }
+}
