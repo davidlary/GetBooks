@@ -437,6 +437,8 @@ def _get_text(elem: etree._Element) -> str:
     if elem.text:
         parts.append(elem.text.strip())
     for child in elem:
+        if not isinstance(child.tag, str):  # skip Comments / PIs
+            continue
         parts.append(_get_text(child))
         if child.tail:
             parts.append(child.tail.strip())
@@ -593,6 +595,8 @@ def _extract_content_blocks(root: etree._Element, module_path: Path,
             # Get text excluding sub-elements like title
             text_parts = []
             for child in elem:
+                if not isinstance(child.tag, str):  # skip Comments / PIs
+                    continue
                 child_local = child.tag.split('}')[-1] if '}' in child.tag else child.tag
                 if child_local not in ('title',):
                     text_parts.append(_get_text(child))
@@ -649,15 +653,21 @@ def _extract_content_blocks(root: etree._Element, module_path: Path,
                 ))
             # Recurse into section content
             for child in elem:
+                if not isinstance(child.tag, str):  # skip Comments / PIs
+                    continue
                 process_element(child, depth + 1)
 
         else:
             # For other elements, recurse into children
             for child in elem:
+                if not isinstance(child.tag, str):  # skip Comments / PIs
+                    continue
                 process_element(child, depth)
 
     # Process all direct children of <content>
     for elem in content:
+        if not isinstance(elem.tag, str):  # skip Comments / PIs
+            continue
         process_element(elem, depth=0)
 
     return blocks
